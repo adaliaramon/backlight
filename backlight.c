@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 						int val;
 						int nv = fscanf(src, "%i", &val);
 						if (nv == 1) {
-							val += next/100.0f*max;
+							val += p == '%' ? next / 100.0f * max : next;
 							fprintf(dst, "%u", val > max ? max : val < 0 ? 0 : val);
 						} else {
 							exit_status = EXIT_FAILURE;
