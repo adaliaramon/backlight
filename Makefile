@@ -1,6 +1,6 @@
 CC      ?= gcc
 LIBS     = -lm
-CFLAGS  += -std=c99 -pedantic -Wall -Wextra -Os
+CFLAGS  += -std=c99 -pedantic -Wall -Wextra -Ofast
 LDFLAGS += -s $(LIBS)
 
 PREFIX    ?= /usr/local
