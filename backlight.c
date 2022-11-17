@@ -12,6 +12,7 @@
 typedef enum {
 	CMD_CUR,
 	CMD_MAX,
+	CMD_PCT,
 	CMD_UNDEF
 } CMD;
 
@@ -64,6 +65,7 @@ CMD parse_command(char *msg)
 	} commands[] = {
 		{ CMD_CUR, "current" },
 		{ CMD_MAX, "maximum" },
+		{ CMD_PCT, "percent" },
 		{ CMD_UNDEF, NULL }
 	}, *cur = commands, *match = NULL;
 	unsigned int nmatch = 0;
@@ -94,23 +96,50 @@ bool query_max(int *v)
 	return true;
 }
 
+bool query_pct(int *v)
+{
+	int val;
+	FILE *src = fopen(actual_brightness_value, "r");
+	if (src != NULL) {
+		int nv = fscanf(src, "%i", &val);
+		if (nv == 1) {
+			int max;
+			if (query_max(&max)) {
+				*v = (val * 100) / max;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+		fclose(src);
+	} else {
+		return false;
+	}
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	int exit_status = EXIT_SUCCESS;
 
 	if (argc < 2) {
-		fprintf(stderr, "usage: backlight c[urrent]|m[aximum]|[+|-]VALUE[%%]\n");
+		fprintf(stderr, "usage: backlight c[urrent]|m[aximum]|p[ercent]|[+|-]VALUE[%%]\n");
 		exit_status = EXIT_FAILURE;
 	} else if (has_sysfs_backlight()) {
 		char *msg = argv[1];
 		if (isalpha(msg[0])) {
 			FILE *src = NULL;
+			int pct = -1;
 			switch (parse_command(msg)) {
 				case CMD_CUR:
 					src = fopen(actual_brightness_value, "r");
 					break;
 				case CMD_MAX:
 					src = fopen(maximum_brightness_value, "r");
+					break;
+				case CMD_PCT:
+					query_pct(&pct);
 					break;
 				default:
 					break;
@@ -123,6 +152,8 @@ int main(int argc, char *argv[])
 				else
 					exit_status = EXIT_FAILURE;
 				fclose(src);
+			} else if (pct >= 0) {
+				printf("%u%%\n", pct);
 			} else {
 				exit_status = EXIT_FAILURE;
 			}
